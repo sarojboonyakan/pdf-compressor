@@ -1,678 +1,183 @@
 <!DOCTYPE html>
-<html lang="th" class="dark">
+<html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF MiniCompressor - ย่อขนาดไฟล์ PDF ส่วนตัว 100%</title>
-    <!-- Google Fonts: Prompt -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Prompt', 'sans-serif'],
-                    },
-                    colors: {
-                        brand: {
-                            50: '#f0f9ff',
-                            100: '#e0f2fe',
-                            500: '#0284c7',
-                            600: '#0284c7',
-                            700: '#0369a1',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- PDF.js for rendering PDF pages -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <!-- jsPDF for creating compressed PDF -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <style>
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 6px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.05);
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 3px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF Compressor - ย่อขนาด PDF หลายไฟล์พร้อมกัน</title>
+  <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    body { font-family: 'Kanit', system-ui, -apple-system, sans-serif; }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
 </head>
-<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen font-sans transition-colors duration-200 flex flex-col justify-between">
-
-    <!-- Top Navigation Header -->
-    <header class="border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur sticky top-0 z-50">
-        <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-sky-500/20">
-                    <i class="fa-solid fa-file-pdf text-xl"></i>
-                </div>
-                <div>
-                    <h1 class="font-bold text-lg leading-tight bg-gradient-to-r from-sky-500 to-indigo-500 bg-clip-text text-transparent">PDF MiniCompressor</h1>
-                    <p class="text-xs text-slate-500 dark:text-slate-400">ย่อไฟล์ PDF ปลอดภัย 100% ทำงานในเครื่องคุณเอง</p>
-                </div>
-            </div>
-
-            <!-- Action Controls -->
-            <div class="flex items-center space-x-2">
-                <button id="themeToggleBtn" class="p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
-                    <i class="fa-solid fa-moon dark:hidden"></i>
-                    <i class="fa-solid fa-sun hidden dark:inline"></i>
-                </button>
-                <span class="hidden sm:inline-block px-3 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700">
-                    <i class="fa-solid fa-shield-halved mr-1"></i> Client-Side Only
-                </span>
-            </div>
-        </div>
+<body class="bg-slate-900 text-slate-100 min-h-screen p-4 md:p-8">
+  <div class="max-w-4xl mx-auto">
+    <!-- Header -->
+    <header class="text-center mb-8">
+      <h1 class="text-3xl md:text-4xl font-bold text-blue-400 mb-2">
+        <i class="fa-solid fa-file-pdf mr-2"></i>PDF Compressor (Batch)
+      </h1>
+      <p class="text-slate-400 text-sm md:text-base">ย่อขนาดไฟล์ PDF ได้ทีละหลายไฟล์ ปลอดภัย 100% ประมวลผลในเครื่องของคุณ</p>
     </header>
 
-    <!-- Main Content Area -->
-    <main class="max-w-4xl mx-auto px-4 py-8 w-full flex-grow">
-        
-        <!-- Navigation Tabs -->
-        <div class="flex border-b border-slate-200 dark:border-slate-800 mb-6">
-            <button id="tabCompressorBtn" onclick="switchTab('compressor')" class="px-5 py-2.5 font-medium text-sm border-b-2 border-sky-500 text-sky-600 dark:text-sky-400 flex items-center space-x-2 transition">
-                <i class="fa-solid fa-compress"></i>
-                <span>เครื่องมือย่อขนาด PDF</span>
-            </button>
-            <button id="tabGuideBtn" onclick="switchTab('guide')" class="px-5 py-2.5 font-medium text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 flex items-center space-x-2 transition">
-                <i class="fa-brands fa-github"></i>
-                <span>วิธีนำไปขึ้น GitHub Pages</span>
-            </button>
-        </div>
-
-        <!-- TAB 1: PDF Compressor App -->
-        <section id="compressorTab" class="space-y-6">
-            
-            <!-- File Drop Area -->
-            <div id="dropZone" class="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl p-8 sm:p-12 text-center bg-white dark:bg-slate-800/50 hover:border-sky-500 dark:hover:border-sky-400 transition cursor-pointer relative overflow-hidden group shadow-sm">
-                <input type="file" id="fileInput" accept="application/pdf" class="hidden">
-                <div class="space-y-4">
-                    <div class="w-16 h-16 mx-auto rounded-full bg-sky-50 dark:bg-slate-700/50 text-sky-500 flex items-center justify-center text-2xl group-hover:scale-110 transition duration-200">
-                        <i class="fa-solid fa-cloud-arrow-up"></i>
-                    </div>
-                    <div>
-                        <p class="text-base font-semibold text-slate-700 dark:text-slate-200">
-                            ลากไฟล์ PDF มาวางที่นี่ หรือ <span class="text-sky-500 hover:underline">คลิกเพื่อเลือกไฟล์</span>
-                        </p>
-                        <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">รองรับไฟล์ PDF ทุกขนาด • ประมวลผลบนเบราว์เซอร์ของคุณ ไม่มีการอัปโหลดไฟล์</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Active File Info Panel (Hidden by default) -->
-            <div id="fileInfoPanel" class="hidden bg-white dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-slate-700 flex flex-wrap items-center justify-between gap-4 shadow-sm">
-                <div class="flex items-center space-x-3 overflow-hidden">
-                    <div class="p-3 bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 rounded-lg">
-                        <i class="fa-solid fa-file-pdf text-2xl"></i>
-                    </div>
-                    <div class="truncate">
-                        <h3 id="fileNameText" class="font-semibold text-sm truncate text-slate-800 dark:text-slate-100">filename.pdf</h3>
-                        <p id="fileDetailText" class="text-xs text-slate-500 dark:text-slate-400">0 MB • 0 หน้า</p>
-                    </div>
-                </div>
-                <button id="removeFileBtn" class="text-slate-400 hover:text-red-500 dark:hover:text-red-400 p-2 text-sm transition" title="ลบไฟล์">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
-            </div>
-
-            <!-- Compression Preset Options (Hidden by default until file selected) -->
-            <div id="optionsPanel" class="hidden bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 space-y-6 shadow-sm">
-                <div>
-                    <h3 class="text-base font-semibold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                        <i class="fa-solid fa-sliders text-sky-500"></i> เลือกระดับการย่อขนาดไฟล์
-                    </h3>
-                    <p class="text-xs text-slate-500 dark:text-slate-400">เลือกระดับความบีบอัดที่คุณต้องการ หรือปรับแต่งค่าเอง</p>
-                </div>
-
-                <!-- Preset Grid Buttons -->
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <button id="presetSmall" onclick="selectPreset('small')" class="preset-btn p-4 rounded-xl border-2 border-slate-200 dark:border-slate-700 text-left hover:border-sky-500 transition relative">
-                        <div class="flex items-center justify-between mb-1">
-                            <span class="font-bold text-sm">🚀 ไฟล์เล็กสุด</span>
-                            <span class="text-xs px-2 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 font-medium">ย่อเยอะที่สุด</span>
-                        </div>
-                        <p class="text-xs text-slate-500 dark:text-slate-400">เน้นประหยัดพื้นที่ เหมาะสำหรับส่งไลน์/อีเมล</p>
-                    </button>
-
-                    <button id="presetMedium" onclick="selectPreset('medium')" class="preset-btn p-4 rounded-xl border-2 border-sky-500 bg-sky-50/50 dark:bg-sky-950/20 text-left transition relative">
-                        <div class="flex items-center justify-between mb-1">
-                            <span class="font-bold text-sm text-sky-600 dark:text-sky-400">⚖️ สมดุล (แนะนำ)</span>
-                            <span class="text-xs px-2 py-0.5 rounded bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-300 font-medium">แนะนำ</span>
-                        </div>
-                        <p class="text-xs text-slate-500 dark:text-slate-400">ความคมชัดระดับปานกลาง ควบคู่กับการย่อขนาดไฟล์</p>
-                    </button>
-
-                    <button id="presetHigh" onclick="selectPreset('high')" class="preset-btn p-4 rounded-xl border-2 border-slate-200 dark:border-slate-700 text-left hover:border-sky-500 transition relative">
-                        <div class="flex items-center justify-between mb-1">
-                            <span class="font-bold text-sm">🔍 ชัดมาก</span>
-                            <span class="text-xs px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 font-medium">ความชัดสูง</span>
-                        </div>
-                        <p class="text-xs text-slate-500 dark:text-slate-400">เน้นเก็บรายละเอียด ตัวหนังสือและรูปภาพยังคมชัด</p>
-                    </button>
-                </div>
-
-                <!-- Custom Advanced Sliders Accordion -->
-                <div class="border-t border-slate-100 dark:border-slate-700/60 pt-4">
-                    <button id="toggleCustomBtn" onclick="toggleCustomSliders()" class="text-xs text-slate-500 dark:text-slate-400 hover:text-sky-500 dark:hover:text-sky-400 font-medium flex items-center gap-1.5 focus:outline-none">
-                        <i id="customIcon" class="fa-solid fa-chevron-right text-[10px] transition-transform duration-200"></i>
-                        <span>ปรับแต่งพารามิเตอร์ขั้นสูงด้วยตนเอง (Custom Sliders)</span>
-                    </button>
-
-                    <div id="customSlidersContainer" class="hidden mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700/80">
-                        <!-- Quality Slider -->
-                        <div class="space-y-1.5">
-                            <div class="flex justify-between text-xs font-medium">
-                                <span>คุณภาพรูปภาพ (JPEG Quality):</span>
-                                <span id="qualityValText" class="text-sky-500 font-bold">65%</span>
-                            </div>
-                            <input type="range" id="qualitySlider" min="20" max="95" value="65" class="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-sky-500">
-                            <div class="flex justify-between text-[10px] text-slate-400">
-                                <span>20% (ไฟล์เบามาก)</span>
-                                <span>95% (ชัดคมกริบ)</span>
-                            </div>
-                        </div>
-
-                        <!-- Scale Slider -->
-                        <div class="space-y-1.5">
-                            <div class="flex justify-between text-xs font-medium">
-                                <span>ความละเอียดพิกเซล (Resolution Scale):</span>
-                                <span id="scaleValText" class="text-sky-500 font-bold">1.3x</span>
-                            </div>
-                            <input type="range" id="scaleSlider" min="0.6" max="2.0" step="0.1" value="1.3" class="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-sky-500">
-                            <div class="flex justify-between text-[10px] text-slate-400">
-                                <span>0.6x (ย่อขนาดภาพ)</span>
-                                <span>2.0x (ละเอียดสูงสุด)</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Process Start Button -->
-                <button id="startCompressBtn" onclick="processPDF()" class="w-full py-3.5 px-6 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white font-semibold rounded-xl shadow-lg shadow-sky-500/25 transition flex items-center justify-center space-x-2">
-                    <i class="fa-solid fa-bolt"></i>
-                    <span>เริ่มย่อขนาด PDF บัดนี้</span>
-                </button>
-            </div>
-
-            <!-- Processing Live Progress Card (Hidden by default) -->
-            <div id="progressPanel" class="hidden bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 space-y-4 shadow-sm text-center">
-                <div class="w-12 h-12 mx-auto rounded-full bg-sky-50 dark:bg-sky-950/50 text-sky-500 flex items-center justify-center text-xl animate-spin">
-                    <i class="fa-solid fa-spinner"></i>
-                </div>
-                <div>
-                    <h3 class="font-semibold text-slate-800 dark:text-slate-100">กำลังย่อขนาดไฟล์ PDF...</h3>
-                    <p id="progressStatusText" class="text-xs text-slate-500 dark:text-slate-400 mt-1">กำลังเรนเดอร์หน้า 1 จาก 10</p>
-                </div>
-
-                <!-- Progress Bar -->
-                <div class="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-3 overflow-hidden p-0.5 border border-slate-200 dark:border-slate-600">
-                    <div id="progressBar" class="bg-gradient-to-r from-sky-500 to-indigo-500 h-full rounded-full transition-all duration-200 w-0"></div>
-                </div>
-            </div>
-
-            <!-- Compression Result Summary Card (Hidden by default) -->
-            <div id="resultPanel" class="hidden bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-8 border border-slate-200 dark:border-slate-700 space-y-6 shadow-sm text-center">
-                <div class="w-16 h-16 mx-auto rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-500 flex items-center justify-center text-3xl">
-                    <i class="fa-solid fa-circle-check"></i>
-                </div>
-                
-                <div>
-                    <h3 class="text-xl font-bold text-slate-800 dark:text-slate-100">ย่อขนาดไฟล์สำเร็จแล้ว!</h3>
-                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">ไฟล์ของคุณได้รับการย่อขนาดเรียบร้อย พร้อมดาวน์โหลด</p>
-                </div>
-
-                <!-- Comparison Metrics Box -->
-                <div class="grid grid-cols-3 gap-2 sm:gap-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-700/50">
-                    <div class="space-y-1">
-                        <span class="text-[11px] text-slate-400 font-medium">ขนาดเดิม</span>
-                        <p id="originalSizeResult" class="text-sm sm:text-base font-bold text-slate-600 dark:text-slate-300">0 MB</p>
-                    </div>
-                    <div class="space-y-1 border-x border-slate-200 dark:border-slate-700">
-                        <span class="text-[11px] text-slate-400 font-medium">ขนาดใหม่</span>
-                        <p id="compressedSizeResult" class="text-sm sm:text-base font-bold text-sky-500">0 MB</p>
-                    </div>
-                    <div class="space-y-1">
-                        <span class="text-[11px] text-slate-400 font-medium">ประหยัดได้</span>
-                        <p id="savingsPercentResult" class="text-sm sm:text-base font-bold text-emerald-500">0%</p>
-                    </div>
-                </div>
-
-                <!-- Action Buttons -->
-                <div class="flex flex-col sm:flex-row gap-3">
-                    <button id="downloadBtn" class="flex-1 py-3.5 px-6 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-xl shadow-lg shadow-emerald-500/25 transition flex items-center justify-center space-x-2">
-                        <i class="fa-solid fa-download"></i>
-                        <span>ดาวน์โหลด PDF ที่ย่อแล้ว</span>
-                    </button>
-                    <button onclick="resetApp()" class="py-3.5 px-5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-medium rounded-xl transition">
-                        ย่อไฟล์อื่นเพิ่ม
-                    </button>
-                </div>
-            </div>
-
-        </section>
-
-        <!-- TAB 2: GitHub Pages Deployment Guide -->
-        <section id="guideTab" class="hidden space-y-6">
-            <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-8 border border-slate-200 dark:border-slate-700 space-y-6 shadow-sm">
-                <div>
-                    <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                        <i class="fa-brands fa-github text-2xl text-sky-500"></i>
-                        วิธินำโค้ดนี้ไปเปิดเป็นเว็บส่วนตัวด้วย GitHub Pages (ฟรี 100%)
-                    </h2>
-                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                        ทำตามขั้นตอนง่ายๆ เพียง 4 ขั้นตอนด้านล่าง เพื่อสร้างเว็บย่อไฟล์ PDF ไว้ใช้งานเองตลอดไป
-                    </p>
-                </div>
-
-                <!-- Step-by-Step Instructions -->
-                <div class="space-y-6 border-t border-slate-100 dark:border-slate-700/80 pt-6">
-                    
-                    <!-- Step 1 -->
-                    <div class="flex gap-4">
-                        <div class="w-8 h-8 rounded-full bg-sky-500 text-white font-bold flex items-center justify-center shrink-0 text-sm">1</div>
-                        <div class="space-y-2">
-                            <h3 class="font-semibold text-slate-800 dark:text-slate-200">สร้าง Repository ใหม่บน GitHub</h3>
-                            <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                                เข้าไปที่ <a href="https://github.com/new" target="_blank" class="text-sky-500 hover:underline">github.com/new</a> (หากยังไม่มีบัญชีให้สมัครฟรี) แล้วตั้งชื่อ Repository เช่น <code class="bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded text-sky-500">pdf-compressor</code> และเลือกสถานะเป็น <b>Public</b>
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- Step 2 -->
-                    <div class="flex gap-4">
-                        <div class="w-8 h-8 rounded-full bg-sky-500 text-white font-bold flex items-center justify-center shrink-0 text-sm">2</div>
-                        <div class="space-y-2">
-                            <h3 class="font-semibold text-slate-800 dark:text-slate-200">เพิ่มไฟล์ index.html</h3>
-                            <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                                กดปุ่ม <b>Add file</b> &gt; <b>Create new file</b> จากนั้นตั้งชื่อไฟล์ว่า <code class="bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded text-sky-500">index.html</code>
-                            </p>
-                            <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                                คัดลอกโค้ดไฟล์ HTML นี้ทั้งหมดไปวางในช่องบรรณาธิการ แล้วกด <b>Commit changes...</b> ที่มุมขวาบน
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- Step 3 -->
-                    <div class="flex gap-4">
-                        <div class="w-8 h-8 rounded-full bg-sky-500 text-white font-bold flex items-center justify-center shrink-0 text-sm">3</div>
-                        <div class="space-y-2">
-                            <h3 class="font-semibold text-slate-800 dark:text-slate-200">เปิดใช้งาน GitHub Pages</h3>
-                            <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                                ไปที่เมนู <b>Settings</b> ของ Repository นั้น &gt; เลือกเมนู <b>Pages</b> ที่แถบซ้ายมือ
-                            </p>
-                            <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                                ในหัวข้อ <i>Build and deployment</i> ตรงช่อง Branch ให้เปลี่ยนจาก <b>None</b> เป็น <b>main</b> (หรือ master) แล้วกด <b>Save</b>
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- Step 4 -->
-                    <div class="flex gap-4">
-                        <div class="w-8 h-8 rounded-full bg-emerald-500 text-white font-bold flex items-center justify-center shrink-0 text-sm">4</div>
-                        <div class="space-y-2">
-                            <h3 class="font-semibold text-slate-800 dark:text-slate-200">เสร็จสิ้น! รอรับลิงก์ใช้งาน</h3>
-                            <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                                รอประมาณ 1-2 นาที GitHub จะสร้างลิงก์หน้าเว็บส่วนตัวของคุณ เช่น: <br>
-                                <code class="bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded text-emerald-600 dark:text-emerald-400 font-mono text-xs block mt-1">https://your-username.github.io/pdf-compressor/</code>
-                            </p>
-                        </div>
-                    </div>
-
-                </div>
-
-                <!-- Notification Box -->
-                <div class="p-4 rounded-xl bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800 text-xs text-sky-800 dark:text-sky-300 flex items-start space-x-3">
-                    <i class="fa-solid fa-lightbulb text-base text-sky-500 shrink-0 mt-0.5"></i>
-                    <span><b>ข้อดี:</b> เว็บไซต์นี้ไม่ต้องใช้เซิร์ฟเวอร์แบ็กเอนด์ในการประมวลผล ดังนั้น GitHub Pages จึงสามารถโฮสต์ให้คุณใช้งานได้ฟรี 100% โดยไม่มีข้อจำกัดเรื่องโควตาไฟล์!</span>
-                </div>
-            </div>
-        </section>
-
-    </main>
-
-    <!-- Footer -->
-    <footer class="border-t border-slate-200 dark:border-slate-800 py-6 text-center text-xs text-slate-400">
-        <div class="max-w-6xl mx-auto px-4 space-y-1">
-            <p>PDF MiniCompressor • 100% Client-Side Private PDF Compressor</p>
-            <p>ขับเคลื่อนด้วย PDF.js & jsPDF • ไม่มีระบบบันทึกข้อมูลส่วนบุคคล</p>
-        </div>
-    </footer>
-
-    <!-- Notification Toast Element -->
-    <div id="toast" class="fixed bottom-5 right-5 bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 px-4 py-3 rounded-xl shadow-2xl text-xs font-medium transition duration-300 transform translate-y-20 opacity-0 flex items-center space-x-2 z-50">
-        <i id="toastIcon" class="fa-solid fa-circle-info"></i>
-        <span id="toastMsg">ข้อความแจ้งเตือน</span>
+    <!-- Settings Card -->
+    <div class="bg-slate-800 rounded-2xl p-6 mb-6 shadow-xl border border-slate-700">
+      <label class="block font-medium mb-2 text-slate-300">ระดับการบีบอัด (Compression Quality)</label>
+      <div class="grid grid-cols-3 gap-3">
+        <button onclick="setQuality(0.4, this)" class="q-btn bg-slate-700 hover:bg-blue-600 text-sm py-2 px-3 rounded-xl transition text-center font-medium">
+          ย่อสูงสุด<br><span class="text-xs text-slate-400 font-normal">(ไฟล์เล็กสุด)</span>
+        </button>
+        <button onclick="setQuality(0.65, this)" class="q-btn bg-blue-600 text-sm py-2 px-3 rounded-xl transition text-center font-medium active-q">
+          สมดุล<br><span class="text-xs text-blue-200 font-normal">(แนะนำ)</span>
+        </button>
+        <button onclick="setQuality(0.85, this)" class="q-btn bg-slate-700 hover:bg-blue-600 text-sm py-2 px-3 rounded-xl transition text-center font-medium">
+          ชัดสูง<br><span class="text-xs text-slate-400 font-normal">(เน้นความชัด)</span>
+        </button>
+      </div>
     </div>
 
-    <script>
-        // Configure PDF.js worker URL
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    <!-- Drop Zone -->
+    <div id="dropZone" 
+         class="border-2 border-dashed border-slate-600 hover:border-blue-400 bg-slate-800/50 hover:bg-slate-800 rounded-2xl p-8 text-center cursor-pointer transition-all mb-6">
+      <input type="file" id="fileInput" multiple accept="application/pdf" class="hidden">
+      <i class="fa-solid fa-cloud-arrow-up text-4xl text-blue-400 mb-3"></i>
+      <p class="text-lg font-medium text-slate-200">ลากไฟล์ PDF มาวางที่นี่ (เลือกได้หลายไฟล์)</p>
+      <p class="text-sm text-slate-400 mt-1">หรือคลิกเพื่อเลือกไฟล์จากเครื่อง</p>
+    </div>
 
-        // Application State
-        let currentFile = null;
-        let pdfDocument = null;
-        let compressedPdfBlob = null;
+    <!-- Actions & Control Bar -->
+    <div id="controlBar" class="hidden flex justify-between items-center mb-4">
+      <span id="totalStats" class="text-sm text-slate-300 font-medium"></span>
+      <button id="downloadAllBtn" onclick="downloadAll()" class="hidden bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium py-2 px-4 rounded-xl transition flex items-center gap-2">
+        <i class="fa-solid fa-download"></i> ดาวน์โหลดทั้งหมด
+      </button>
+    </div>
 
-        // Settings State
-        let selectedPreset = 'medium'; // 'small', 'medium', 'high', 'custom'
-        let customQuality = 0.65;
-        let customScale = 1.3;
+    <!-- File List Container -->
+    <div id="fileList" class="space-y-3"></div>
+  </div>
 
-        // DOM Elements
-        const dropZone = document.getElementById('dropZone');
-        const fileInput = document.getElementById('fileInput');
-        const fileInfoPanel = document.getElementById('fileInfoPanel');
-        const optionsPanel = document.getElementById('optionsPanel');
-        const progressPanel = document.getElementById('progressPanel');
-        const resultPanel = document.getElementById('resultPanel');
-        const qualitySlider = document.getElementById('qualitySlider');
-        const scaleSlider = document.getElementById('scaleSlider');
+  <script>
+    let compressionQuality = 0.65;
+    let processedFiles = [];
 
-        // Dark Mode Toggle Logic
-        const themeToggleBtn = document.getElementById('themeToggleBtn');
-        themeToggleBtn.addEventListener('click', () => {
-            document.documentElement.classList.toggle('dark');
-        });
+    function setQuality(val, btn) {
+      compressionQuality = val;
+      document.querySelectorAll('.q-btn').forEach(b => {
+        b.classList.remove('bg-blue-600', 'active-q');
+        b.classList.add('bg-slate-700');
+      });
+      btn.classList.remove('bg-slate-700');
+      btn.classList.add('bg-blue-600', 'active-q');
+    }
 
-        // Drag and Drop Events
-        ['dragenter', 'dragover'].forEach(eventName => {
-            dropZone.addEventListener(eventName, (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                dropZone.classList.add('border-sky-500', 'bg-sky-50/50', 'dark:bg-sky-950/20');
-            }, false);
-        });
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const fileList = document.getElementById('fileList');
 
-        ['dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                dropZone.classList.remove('border-sky-500', 'bg-sky-50/50', 'dark:bg-sky-950/20');
-            }, false);
-        });
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('border-blue-400', 'bg-slate-800'); });
+    dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('border-blue-400', 'bg-slate-800'); });
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('border-blue-400', 'bg-slate-800');
+      if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
+    });
 
-        dropZone.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length) handleFiles(e.target.files);
+    });
 
-        dropZone.addEventListener('drop', (e) => {
-            const dt = e.dataTransfer;
-            const files = dt.files;
-            if (files.length > 0) handleFileSelect(files[0]);
-        });
+    async function handleFiles(files) {
+      const pdfFiles = Array.from(files).filter(f => f.type === 'application/pdf');
+      if (!pdfFiles.length) return alert('กรุณาเลือกไฟล์ .pdf เท่านั้นครับ');
 
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) handleFileSelect(e.target.files[0]);
-        });
+      document.getElementById('controlBar').classList.remove('hidden');
 
-        document.getElementById('removeFileBtn').addEventListener('click', resetApp);
+      for (const file of pdfFiles) {
+        await processFile(file);
+      }
+    }
 
-        async function handleFileSelect(file) {
-            if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
-                showToast('กรุณาเลือกไฟล์รูปแบบ PDF เท่านั้น', 'error');
-                return;
-            }
+    function formatSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / 1048576).toFixed(2) + ' MB';
+    }
 
-            currentFile = file;
-            document.getElementById('fileNameText').innerText = file.name;
+    async function processFile(file) {
+      const fileId = 'file_' + Math.random().toString(36).substr(2, 9);
+      
+      // Create UI Item
+      const itemEl = document.createElement('div');
+      itemEl.id = fileId;
+      itemEl.className = 'bg-slate-800 border border-slate-700 rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow';
+      itemEl.innerHTML = `
+        <div class="flex items-center gap-3 overflow-hidden">
+          <i class="fa-solid fa-file-pdf text-red-400 text-2xl flex-shrink-0"></i>
+          <div class="truncate">
+            <p class="font-medium text-slate-200 truncate">${file.name}</p>
+            <p class="text-xs text-slate-400">ขนาดต้นฉบับ: ${formatSize(file.size)}</p>
+          </div>
+        </div>
+        <div id="status_${fileId}" class="flex items-center gap-3">
+          <span class="text-xs text-blue-400 font-medium animate-pulse"><i class="fa-solid fa-spinner fa-spin mr-1"></i> กำลังย่อขนาด...</span>
+        </div>
+      `;
+      fileList.prepend(itemEl);
 
-            try {
-                // Read PDF using PDF.js to get total pages
-                const arrayBuffer = await file.arrayBuffer();
-                pdfDocument = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-                
-                const pageCount = pdfDocument.numPages;
-                const formattedSize = formatBytes(file.size);
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+        
+        // Re-encode / rebuild document
+        const newPdf = await PDFLib.PDFDocument.create();
+        const pages = await newPdf.copyPages(pdfDoc, pdfDoc.getPageIndices());
+        pages.forEach(p => newPdf.addPage(p));
 
-                document.getElementById('fileDetailText').innerText = `${formattedSize} • ${pageCount} หน้า`;
+        const compressedBytes = await newPdf.save({ useObjectStreams: true });
+        const blob = new Blob([compressedBytes], { type: 'application/pdf' });
+        const compressedSize = blob.size;
+        const reduction = (((file.size - compressedSize) / file.size) * 100).toFixed(1);
 
-                // Display Options Panel
-                dropZone.classList.add('hidden');
-                fileInfoPanel.classList.remove('hidden');
-                optionsPanel.classList.remove('hidden');
-            } catch (err) {
-                console.error("Error reading PDF:", err);
-                showToast('ไม่สามารถอ่านไฟล์ PDF นี้ได้ ไฟล์อาจเสียหายหรือติดรหัสผ่าน', 'error');
-                resetApp();
-            }
+        const downloadUrl = URL.createObjectURL(blob);
+        const outputName = file.name.replace(/\.pdf$/i, '_compressed.pdf');
+
+        processedFiles.push({ name: outputName, url: downloadUrl });
+
+        const statusEl = document.getElementById(`status_${fileId}`);
+        statusEl.innerHTML = `
+          <div class="text-right mr-2">
+            <p class="text-xs font-semibold text-emerald-400">เหลือ ${formatSize(compressedSize)} (${reduction > 0 ? '-' + reduction : '0'}%)</p>
+          </div>
+          <a href="${downloadUrl}" download="${outputName}" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium py-2 px-3 rounded-lg transition flex items-center gap-1">
+            <i class="fa-solid fa-download"></i> โหลด
+          </a>
+        `;
+
+        if (processedFiles.length > 1) {
+          document.getElementById('downloadAllBtn').classList.remove('hidden');
         }
+      } catch (err) {
+        console.error(err);
+        document.getElementById(`status_${fileId}`).innerHTML = `
+          <span class="text-xs text-red-400 font-medium"><i class="fa-solid fa-triangle-exclamation mr-1"></i> เกิดข้อผิดพลาด</span>
+        `;
+      }
+    }
 
-        function selectPreset(preset) {
-            selectedPreset = preset;
-            const btnSmall = document.getElementById('presetSmall');
-            const btnMed = document.getElementById('presetMedium');
-            const btnHigh = document.getElementById('presetHigh');
-
-            // Reset styles
-            [btnSmall, btnMed, btnHigh].forEach(btn => {
-                btn.className = "preset-btn p-4 rounded-xl border-2 border-slate-200 dark:border-slate-700 text-left hover:border-sky-500 transition relative";
-            });
-
-            if (preset === 'small') {
-                btnSmall.className = "preset-btn p-4 rounded-xl border-2 border-sky-500 bg-sky-50/50 dark:bg-sky-950/20 text-left transition relative";
-                customQuality = 0.40;
-                customScale = 1.0;
-            } else if (preset === 'medium') {
-                btnMed.className = "preset-btn p-4 rounded-xl border-2 border-sky-500 bg-sky-50/50 dark:bg-sky-950/20 text-left transition relative";
-                customQuality = 0.65;
-                customScale = 1.3;
-            } else if (preset === 'high') {
-                btnHigh.className = "preset-btn p-4 rounded-xl border-2 border-sky-500 bg-sky-50/50 dark:bg-sky-950/20 text-left transition relative";
-                customQuality = 0.85;
-                customScale = 1.8;
-            }
-
-            // Sync slider UI
-            qualitySlider.value = Math.round(customQuality * 100);
-            scaleSlider.value = customScale;
-            updateSliderTexts();
-        }
-
-        function toggleCustomSliders() {
-            const container = document.getElementById('customSlidersContainer');
-            const icon = document.getElementById('customIcon');
-            container.classList.toggle('hidden');
-            icon.classList.toggle('rotate-90');
-        }
-
-        qualitySlider.addEventListener('input', (e) => {
-            customQuality = parseInt(e.target.value, 10) / 100;
-            updateSliderTexts();
-        });
-
-        scaleSlider.addEventListener('input', (e) => {
-            customScale = parseFloat(e.target.value);
-            updateSliderTexts();
-        });
-
-        function updateSliderTexts() {
-            document.getElementById('qualityValText').innerText = `${Math.round(customQuality * 100)}%`;
-            document.getElementById('scaleValText').innerText = `${customScale}x`;
-        }
-
-        async function processPDF() {
-            if (!pdfDocument || !currentFile) return;
-
-            optionsPanel.classList.add('hidden');
-            progressPanel.classList.remove('hidden');
-
-            const totalPages = pdfDocument.numPages;
-            const { jsPDF } = window.jspdf;
-            let compressedPdf = null;
-
-            try {
-                for (let i = 1; i <= totalPages; i++) {
-                    // Update progress UI
-                    const progressPercent = Math.round((i / totalPages) * 100);
-                    document.getElementById('progressBar').style.width = `${progressPercent}%`;
-                    document.getElementById('progressStatusText').innerText = `กำลังประมวลผลหน้า ${i} จาก ${totalPages}...`;
-
-                    // Render page to canvas
-                    const page = await pdfDocument.getPage(i);
-                    const viewport = page.getViewport({ scale: customScale });
-
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    canvas.width = viewport.width;
-                    canvas.height = viewport.height;
-
-                    await page.render({
-                        canvasContext: ctx,
-                        viewport: viewport
-                    }).promise;
-
-                    // Compress canvas to JPEG image string
-                    const imgData = canvas.toDataURL('image/jpeg', customQuality);
-
-                    // Get unscaled dimensions in points for standard PDF sizing
-                    const unscaledViewport = page.getViewport({ scale: 1.0 });
-                    const pdfWidth = unscaledViewport.width;
-                    const pdfHeight = unscaledViewport.height;
-                    const orientation = pdfWidth > pdfHeight ? 'landscape' : 'portrait';
-
-                    if (i === 1) {
-                        compressedPdf = new jsPDF({
-                            orientation: orientation,
-                            unit: 'pt',
-                            format: [pdfWidth, pdfHeight]
-                        });
-                    } else {
-                        compressedPdf.addPage([pdfWidth, pdfHeight], orientation);
-                    }
-
-                    compressedPdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
-
-                    // Allow UI thread to breathe
-                    await new Promise(r => setTimeout(r, 10));
-                }
-
-                // Convert compressed PDF to Blob
-                compressedPdfBlob = compressedPdf.output('blob');
-
-                // Display Results
-                displayResults(currentFile.size, compressedPdfBlob.size);
-
-            } catch (err) {
-                console.error("Compression Error:", err);
-                showToast('เกิดข้อผิดพลาดในการย่อขนาดไฟล์', 'error');
-                progressPanel.classList.add('hidden');
-                optionsPanel.classList.remove('hidden');
-            }
-        }
-
-        function displayResults(origSize, newSize) {
-            progressPanel.classList.add('hidden');
-            resultPanel.classList.remove('hidden');
-
-            document.getElementById('originalSizeResult').innerText = formatBytes(origSize);
-            document.getElementById('compressedSizeResult').innerText = formatBytes(newSize);
-
-            // Calculate savings percentage
-            let savedPercent = 0;
-            if (origSize > 0) {
-                savedPercent = Math.round(((origSize - newSize) / origSize) * 100);
-            }
-
-            const savingsElem = document.getElementById('savingsPercentResult');
-            if (savedPercent > 0) {
-                savingsElem.innerText = `ลดลง ${savedPercent}%`;
-                savingsElem.className = "text-sm sm:text-base font-bold text-emerald-500";
-            } else {
-                savingsElem.innerText = `+${Math.abs(savedPercent)}%`;
-                savingsElem.className = "text-sm sm:text-base font-bold text-amber-500";
-            }
-
-            // Download Button listener
-            const downloadBtn = document.getElementById('downloadBtn');
-            downloadBtn.onclick = () => {
-                const url = URL.createObjectURL(compressedPdfBlob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `compressed_${currentFile.name}`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-                showToast('เริ่มดาวน์โหลดไฟล์แล้ว', 'success');
-            };
-        }
-
-        function resetApp() {
-            currentFile = null;
-            pdfDocument = null;
-            compressedPdfBlob = null;
-            fileInput.value = '';
-
-            dropZone.classList.remove('hidden');
-            fileInfoPanel.classList.add('hidden');
-            optionsPanel.classList.add('hidden');
-            progressPanel.classList.add('hidden');
-            resultPanel.classList.add('hidden');
-
-            document.getElementById('progressBar').style.width = '0%';
-            selectPreset('medium');
-        }
-
-        function switchTab(tabName) {
-            const compTab = document.getElementById('compressorTab');
-            const guideTab = document.getElementById('guideTab');
-            const compBtn = document.getElementById('tabCompressorBtn');
-            const guideBtn = document.getElementById('tabGuideBtn');
-
-            if (tabName === 'compressor') {
-                compTab.classList.remove('hidden');
-                guideTab.classList.add('hidden');
-                
-                compBtn.className = "px-5 py-2.5 font-medium text-sm border-b-2 border-sky-500 text-sky-600 dark:text-sky-400 flex items-center space-x-2 transition";
-                guideBtn.className = "px-5 py-2.5 font-medium text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 flex items-center space-x-2 transition";
-            } else {
-                compTab.classList.add('hidden');
-                guideTab.classList.remove('hidden');
-
-                guideBtn.className = "px-5 py-2.5 font-medium text-sm border-b-2 border-sky-500 text-sky-600 dark:text-sky-400 flex items-center space-x-2 transition";
-                compBtn.className = "px-5 py-2.5 font-medium text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 flex items-center space-x-2 transition";
-            }
-        }
-
-        function formatBytes(bytes, decimals = 2) {
-            if (bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const dm = decimals < 0 ? 0 : decimals;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-        }
-
-        function showToast(message, type = 'info') {
-            const toast = document.getElementById('toast');
-            const toastMsg = document.getElementById('toastMsg');
-            const toastIcon = document.getElementById('toastIcon');
-
-            toastMsg.innerText = message;
-            if (type === 'error') {
-                toastIcon.className = "fa-solid fa-circle-exclamation text-red-400";
-            } else if (type === 'success') {
-                toastIcon.className = "fa-solid fa-circle-check text-emerald-400";
-            } else {
-                toastIcon.className = "fa-solid fa-circle-info text-sky-400";
-            }
-
-            toast.classList.remove('translate-y-20', 'opacity-0');
-            setTimeout(() => {
-                toast.classList.add('translate-y-20', 'opacity-0');
-            }, 3000);
-        }
-    </script>
+    function downloadAll() {
+      processedFiles.forEach((file, index) => {
+        setTimeout(() => {
+          const a = document.createElement('a');
+          a.href = file.url;
+          a.download = file.name;
+          a.click();
+        }, index * 300); // เว้นระยะดาวน์โหลดเล็กน้อยกันเบราว์เซอร์บล็อก
+      });
+    }
+  </script>
 </body>
 </html>
